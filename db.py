@@ -5,6 +5,7 @@ from flask import Flask, render_template, request, jsonify, redirect, flash, url
 
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_sqlalchemy import SQLAlchemy
+from werkzeug.security import generate_password_hash, check_password_hash
 
 from flask_login import UserMixin, login_user, LoginManager, login_required, current_user, logout_user
 
@@ -50,5 +51,37 @@ admin.add_view(MyModelView(User, db.session))
 def index():
 
     return "database created "
+@app.route("/register",methods=["GET","POST"])
+def re():
+    if request.method=="POST":
+        name=request.form.get("name")
+
+        phone=request.form.get("phone")
+        password_hashed=generate_password_hash(
+            request.form.get('password'),
+            method='pbkdf2:sha256',
+            salt_length=8
+        )
+        new=User(
+            name=name,password=password_hashed,phone=phone
+        )
+        db.session.add(new)
+        db.session.commit()
+        return redirect("/login")
+    return render_template("register.html")
+@app.route("/login",methods=["GET","POST"])
+def login():
+    if request.method=="POST":
+        name = request.form.get("name")
+        password = request.form.get("password")
+        user=User.query.all()
+        for  i  in user :
+            if name ==i.name :
+                if check_password_hash(i.password, password) :
+                            return "welcome"
+        return redirect("/register")
+    return render_template("login.html")
+
+
 if __name__ == '__main__':
     app.run(debug=True)
